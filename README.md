@@ -8,7 +8,7 @@ that decides whether you are allowed to have one at all.
 
 Most people with a side hustle have a day job. The contract they signed for that
 day job contains three or four clauses that govern everything they build on a
-Sunday — who owns it, whether they needed permission first, whether they were
+Sunday: who owns it, whether they needed permission first, whether they were
 obliged to mention it. Those clauses are written to be skimmed past.
 
 Moonlight finds them, quotes them, and tells you what to ask.
@@ -25,7 +25,7 @@ This is the least uploadable document a person owns.
 A freelancer can paste a client contract into a cloud model and risk a scolding.
 Pasting *your own employment agreement* into someone else's API means handing a
 third party your salary, your notice period, your employer's name and the exact
-clauses you are quietly worried about — in order to ask a question you do not
+clauses you are quietly worried about, in order to ask a question you do not
 want your employer to know you asked.
 
 There is no version of this product that runs on a hosted API. Open weights are
@@ -45,7 +45,7 @@ Outbound connections observed: 7
 
 DNS lookups observed: 0
 
-PASS — every connection was to loopback. The contract never left this machine.
+PASS. Every connection was to loopback. The contract never left this machine.
 ```
 
 `src/airgap.js` monkey-patches `net.Socket.prototype.connect`, `tls.connect` and
@@ -67,13 +67,13 @@ Then the copy is checked:
 
 ```js
 if (!normalise(clauseText).includes(normalise(quote))) {
-  // not in the document — discard the reading, keep the clause
+  // Not in the document. Discard the reading, keep the clause.
 }
 ```
 
 A quote that is not in your contract, character for character after whitespace
 normalisation, is treated as a hallucination rather than a summary. The clause
-is still shown — raw, unread, and labelled *located, not read*.
+is still shown: raw, unread, and labelled *located, not read*.
 
 This matters more than it sounds. A paraphrase of a contract clause reads
 exactly like the clause and can mean the opposite, and the person reading it has
@@ -85,21 +85,21 @@ no way to tell. See [What the 1B model did](#what-the-1b-model-did).
 
 | Output | Produced by | Checkable? |
 | --- | --- | --- |
-| Which clauses are relevant | Keyword retrieval (`src/clauses.js`) | Yes — it shows the phrase it matched |
-| The operative sentence | gemma3:4b, then verified against the document | Yes — it is in your contract or it is not shown |
-| What the clause does (flags) | Pattern matching (`src/flags.js`) | Yes — each flag quotes the words that triggered it |
+| Which clauses are relevant | Keyword retrieval (`src/clauses.js`) | Yes. It shows the phrase it matched |
+| The operative sentence | gemma3:4b, then verified against the document | Yes. It is in your contract or it is not shown |
+| What the clause does (flags) | Pattern matching (`src/flags.js`) | Yes. Each flag quotes the words that triggered it |
 | Ordering | Flag weights, in code | Yes |
-| Whether you may do it | **Nothing. It does not answer this.** | — |
+| Whether you may do it | **Nothing. It does not answer this.** | n/a |
 
 The flags are the part a reader acts on:
 
-- **Asks permission, not a ban** — *"without the prior written consent of the Company"*
-- **Outlives the job** — *"at any time after its termination"*
-- **Reaches past working hours** — *"whether or not during working hours"*
-- **Applies even if unrelated** — *"whether or not relating to the present business of the Company"*
-- **Applies on your own equipment** — *"whether or not using the resources of the Company"*
-- **Transfers ownership** — *"hereby assigns to the Company all right"*
-- **You must tell them** — *"shall promptly disclose to the Company in writing any interest"*
+- **Asks permission, not a ban**: *"without the prior written consent of the Company"*
+- **Outlives the job**: *"at any time after its termination"*
+- **Reaches past working hours**: *"whether or not during working hours"*
+- **Applies even if unrelated**: *"whether or not relating to the present business of the Company"*
+- **Applies on your own equipment**: *"whether or not using the resources of the Company"*
+- **Transfers ownership**: *"hereby assigns to the Company all right"*
+- **You must tell them**: *"shall promptly disclose to the Company in writing any interest"*
 
 Each one is a regex over the clause text, and each shows its evidence, so a
 wrong flag is wrong visibly.
@@ -109,14 +109,14 @@ wrong flag is wrong visibly.
 ## Why the model does not get to judge
 
 It was going to. The first build asked gemma3:4b to classify each clause as
-`yes` / `unclear` / `no` — does this reach outside the job. It answered
+`yes` / `unclear` / `no` on whether it reaches outside the job. It answered
 `unclear` for all 8 clauses in the sample contract.
 
 Rewriting the prompt with sharper definitions flipped it: now it answered `yes`
 for all 8. Same model, same contract, same temperature, opposite output. That
 is not a judgement, it is a coin that lands on whichever side the prompt tilts.
 
-So it got measured instead. `src/eval.js` is 14 labelled clauses — 6 that reach
+So it got measured instead. `src/eval.js` is 14 labelled clauses: 6 that reach
 outside the job, 5 that cannot, 3 that genuinely read both ways:
 
 ```
@@ -149,7 +149,7 @@ So the classification was deleted from the product and the extraction was kept.
 `src/flags.js` exists because of that eval.
 
 The one consolation in the error profile: **zero `yes -> no` errors.** It never
-called a binding clause harmless. For this tool that is the right asymmetry —
+called a binding clause harmless. For this tool that is the right asymmetry.
 over-flagging costs you ten minutes of reading, under-flagging costs you the
 rights to your own project.
 
@@ -197,7 +197,7 @@ the actual clause says: fill in a form.
 
 The verbatim gate rejected it, because those words are not in the document.
 That is the single best argument for the rule, and I did not have to invent the
-example — a 1B model produced it on the first clause I tested.
+example. A 1B model produced it on the first clause I tested.
 
 ---
 
@@ -267,7 +267,7 @@ which clauses matter. Retrieval does that, in code, before any inference runs.
 ## What it is not
 
 It is not a lawyer, and it does not pretend to be one. It never says whether
-something is allowed, enforceable, or advisable — `stripVerdicts()` removes
+something is allowed, enforceable, or advisable. `stripVerdicts()` removes
 those sentences if the model produces them anyway.
 
 Retrieval is keyword-based, so a contract that phrases a moonlighting clause in

@@ -106,9 +106,9 @@ const violations = [
 ];
 
 if (violations.length) {
-  console.log(`\nFAIL — ${violations.length} connection(s) left this machine:`);
+  console.log(`\nFAIL. ${violations.length} connection(s) left this machine:`);
   for (const v of violations) console.log(`  ${v.kind} ${v.host}${v.port ? `:${v.port}` : ''}`);
   process.exit(1);
 }
 
-console.log('\nPASS — every connection was to loopback. The contract never left this machine.');
+console.log('\nPASS. Every connection was to loopback. The contract never left this machine.');
