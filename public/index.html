@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Moonlight</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>Can you sell what you build?</h1>
+        <p class="sub">
+          Every tool for side hustlers helps you run one. This one reads the
+          contract you already signed and finds the clauses that decide whether
+          you are allowed to have one.
+        </p>
+        <p class="offline" id="offline">
+          <span class="dot" aria-hidden="true"></span>
+          <span id="offline-text">checking the local model…</span>
+        </p>
+      </header>
+
+      <section class="input">
+        <label for="contract">Your employment contract</label>
+        <textarea
+          id="contract"
+          spellcheck="false"
+          placeholder="Paste the whole thing. It is read on this machine, by a model on this machine, and no part of it is sent anywhere."
+        ></textarea>
+        <div class="actions">
+          <button id="go" type="button">Read it</button>
+          <button id="sample" type="button" class="ghost">Use the sample contract</button>
+          <span id="status" class="status" role="status"></span>
+        </div>
+      </section>
+
+      <section id="results" hidden>
+        <div class="statline" id="statline"></div>
+        <div id="findings"></div>
+        <div id="absent" class="absent"></div>
+        <p class="disclaimer">
+          Moonlight locates clauses and quotes them. It does not tell you what
+          they mean for you, whether they are enforceable, or what to do. Those
+          are questions for your employer, in writing, or for a lawyer.
+        </p>
+      </section>
+    </main>
+    <script src="app.js" type="module"></script>
+  </body>
+</html>

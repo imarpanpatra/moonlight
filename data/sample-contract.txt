@@ -1,0 +1,153 @@
+EMPLOYMENT AGREEMENT
+
+This Agreement is made on the 1st day of April, 2026, between NORTHWIND SOFTWARE
+PRIVATE LIMITED, a company incorporated under the Companies Act, 2013, having its
+registered office at Level 4, Pergola Tech Park, Pune 411014 (hereinafter "the
+Company"), and the person named in Schedule A (hereinafter "the Employee").
+
+THIS IS A FICTIONAL DOCUMENT. It was written to exercise this software and is
+not anyone's real employment contract. Any resemblance to a real agreement is a
+consequence of how formulaic these documents are.
+
+1. APPOINTMENT
+
+1.1 The Company appoints the Employee to the position of Senior Software
+Engineer, reporting to the Engineering Manager or such other person as the
+Company may designate from time to time.
+
+1.2 This appointment shall be effective from the date of joining recorded in
+Schedule A and shall continue until terminated in accordance with Clause 15.
+
+2. PROBATION
+
+2.1 The Employee shall be on probation for a period of six (6) months from the
+date of joining, which the Company may extend by a further three (3) months at
+its sole discretion.
+
+3. REMUNERATION
+
+3.1 The Employee shall be paid the annual cost to company set out in Schedule A,
+payable monthly in arrears after deduction of tax at source and all statutory
+contributions.
+
+3.2 Remuneration is confidential to the Employee. The Employee shall not discuss
+the particulars of their compensation with other employees of the Company.
+
+4. HOURS AND PLACE OF WORK
+
+4.1 The Employee's normal hours of work shall be forty-five (45) hours per week,
+Monday to Friday, and such additional hours as may reasonably be required for
+the proper discharge of their duties, for which no separate payment shall be
+made.
+
+4.2 The Employee shall devote the whole of their time, attention and skill
+during working hours to the business of the Company and shall use their best
+efforts to promote the interests of the Company.
+
+5. DUTIES
+
+5.1 The Employee shall perform such duties as are assigned to them and shall
+comply with all policies of the Company as amended from time to time, including
+the Information Security Policy and the Acceptable Use Policy.
+
+5.2 The Employee shall at all times act in the best interests of the Company and
+shall not do anything which brings the Company into disrepute.
+
+6. OUTSIDE WORK AND OTHER ENGAGEMENTS
+
+6.1 During the term of this Agreement the Employee shall not, without the prior
+written consent of the Company, engage in any other employment, consultancy,
+trade or business, whether or not for remuneration, and whether or not such
+activity competes with the business of the Company.
+
+6.2 Consent under Clause 6.1 shall not be unreasonably withheld where the
+proposed activity does not interfere with the Employee's duties, does not make
+use of the Company's resources, and does not involve a client or competitor of
+the Company.
+
+6.3 The Employee shall apply for consent in writing to the Human Resources
+department and shall not commence the activity until consent has been received.
+
+7. CONFLICT OF INTEREST
+
+7.1 The Employee shall promptly disclose to the Company in writing any interest,
+direct or indirect, which conflicts or may conflict with the interests of the
+Company, including any shareholding, directorship, consultancy or family
+relationship bearing on the Company's business.
+
+7.2 A failure to disclose an interest under Clause 7.1 shall be treated as
+misconduct.
+
+8. CONFIDENTIAL INFORMATION
+
+8.1 The Employee shall not, during employment or at any time after its
+termination, disclose to any third party or use for their own benefit any
+confidential information of the Company, including source code, architecture,
+customer lists, pricing, roadmaps, unpublished financial data and the terms of
+the Company's agreements with third parties.
+
+8.2 The obligations in Clause 8.1 shall survive the termination of this
+Agreement without limit in time.
+
+9. INTELLECTUAL PROPERTY
+
+9.1 For the purposes of this Clause, "Works" means all inventions, designs,
+discoveries, improvements, software, source code, documentation, data, processes
+and other work product.
+
+9.2 The Employee agrees that all Works conceived, created or developed by the
+Employee during the term of employment, whether or not during working hours,
+whether or not using the resources of the Company, and whether or not relating
+to the present business of the Company, shall be the sole and exclusive property
+of the Company, and the Employee hereby assigns to the Company all right, title
+and interest, including copyright and patent, in such Works.
+
+9.3 The Employee shall promptly disclose all such Works to the Company and shall
+execute such documents as the Company may require to perfect its title.
+
+9.4 The Employee waives all moral rights in the Works to the extent permitted by
+applicable law.
+
+10. COMPANY PROPERTY AND RESOURCES
+
+10.1 Equipment, accounts, licences and credentials provided by the Company are
+for the business of the Company and shall not be used for any other purpose.
+
+11. NON-SOLICITATION
+
+11.1 For a period of twelve (12) months after termination the Employee shall not
+solicit any client or customer of the Company with whom the Employee dealt in
+the twelve (12) months preceding termination, nor entice away any employee of
+the Company.
+
+12. DATA PROTECTION
+
+12.1 The Employee consents to the Company processing their personal data for the
+purposes of the employment relationship and its statutory obligations.
+
+13. LEAVE
+
+13.1 The Employee shall be entitled to eighteen (18) days of earned leave per
+calendar year, accruing monthly, of which no more than twelve (12) days may be
+carried forward.
+
+14. NOTICE
+
+14.1 After confirmation, either party may terminate this Agreement by giving
+sixty (60) days written notice, or payment of basic salary in lieu thereof at
+the Company's discretion.
+
+15. TERMINATION
+
+15.1 The Company may terminate this Agreement without notice in the event of
+misconduct, including a breach of Clause 6, Clause 7, Clause 8 or Clause 9.
+
+16. GOVERNING LAW
+
+16.1 This Agreement shall be governed by the laws of India and the courts at
+Pune shall have exclusive jurisdiction.
+
+17. ENTIRE AGREEMENT
+
+17.1 This Agreement, together with its Schedules, constitutes the entire
+agreement between the parties and supersedes all prior discussions.

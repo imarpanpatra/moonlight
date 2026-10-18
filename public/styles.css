@@ -1,0 +1,330 @@
+:root {
+  --bg: #0d1012;
+  --panel: #14181b;
+  --panel-2: #191e22;
+  --line: #262d33;
+  --ink: #e6e9ea;
+  --muted: #8e9aa3;
+  --dim: #6b757d;
+  --accent: #d8b25f;
+  --warn: #d98b5f;
+  --unclear: #7f92a3;
+  --ok: #5f9e7a;
+  --bad: #a8605c;
+  --radius: 10px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 16px/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+main {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 56px 16px 96px;
+}
+
+h1 {
+  margin: 0 0 12px;
+  font-size: clamp(28px, 5vw, 40px);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.sub {
+  margin: 0 0 20px;
+  color: var(--muted);
+  max-width: 62ch;
+}
+
+/* The claim the whole project rests on, so it is stated on screen. */
+.offline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 36px;
+  padding: 7px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel);
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.offline .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--dim);
+}
+
+.offline.up .dot {
+  background: var(--ok);
+}
+
+.offline.down .dot {
+  background: var(--bad);
+}
+
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--dim);
+}
+
+textarea {
+  width: 100%;
+  min-height: 220px;
+  padding: 14px 16px;
+  background: var(--panel);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  font: 14px/1.65 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  resize: vertical;
+}
+
+textarea:focus {
+  outline: none;
+  border-color: #3a444c;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+button {
+  padding: 10px 18px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #1a1407;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+button.ghost {
+  background: transparent;
+  border-color: var(--line);
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.status {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.statline {
+  margin: 40px 0 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+  color: var(--dim);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.finding {
+  margin-bottom: 14px;
+  padding: 18px 20px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--unclear);
+  border-radius: var(--radius);
+}
+
+.finding.yes {
+  border-left-color: var(--warn);
+}
+
+.finding.unclear {
+  border-left-color: var(--unclear);
+}
+
+.finding.no {
+  border-left-color: var(--line);
+}
+
+.finding.unverified {
+  border-left-color: var(--bad);
+  border-style: dashed;
+}
+
+.fhead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.cat {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.finding.unverified .cat {
+  color: var(--bad);
+}
+
+.num {
+  font-size: 12px;
+  color: var(--dim);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.tag {
+  margin-left: auto;
+  padding: 2px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+blockquote {
+  margin: 0 0 12px;
+  padding: 2px 0 2px 16px;
+  border-left: 2px solid var(--line);
+  color: var(--ink);
+  font-size: 15px;
+}
+
+.flags {
+  margin: 0 0 14px;
+  padding: 0;
+  list-style: none;
+}
+
+.flags li {
+  margin-bottom: 8px;
+  padding-left: 14px;
+  border-left: 2px solid var(--accent);
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.flags strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* The words in the contract that set the flag off, so a reader can check it. */
+.ev {
+  display: block;
+  margin-top: 3px;
+  color: var(--dim);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+}
+
+.ev::before {
+  content: "\201c";
+}
+
+.ev::after {
+  content: "\201d";
+}
+
+.effect {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.q {
+  margin: 0;
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.q::before {
+  content: "Ask: ";
+  color: var(--accent);
+  font-weight: 600;
+}
+
+details {
+  margin-top: 12px;
+  font-size: 13px;
+}
+
+summary {
+  color: var(--dim);
+  cursor: pointer;
+}
+
+details pre {
+  margin: 10px 0 0;
+  padding: 12px;
+  background: var(--panel-2);
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-x: auto;
+}
+
+.absent {
+  margin-top: 26px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.absent ul {
+  margin: 10px 0 0;
+  padding-left: 18px;
+}
+
+.absent li {
+  margin-bottom: 4px;
+}
+
+.disclaimer {
+  margin-top: 30px;
+  color: var(--dim);
+  font-size: 13px;
+  max-width: 64ch;
+}
+
+.error {
+  padding: 14px 16px;
+  border: 1px solid var(--bad);
+  border-radius: var(--radius);
+  background: rgba(168, 96, 92, 0.1);
+  color: #e8c4c2;
+  font-size: 14px;
+}
