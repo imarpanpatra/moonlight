@@ -1,4 +1,7 @@
 node_modules/
 *.log
 data/contract-*.txt
+body.json
+repro-tmp.mjs
+big.json
 SUBMISSION.md
