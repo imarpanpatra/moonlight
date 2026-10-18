@@ -19,12 +19,20 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const LOOPBACK = /^(127(\.\d+){3}|::1|localhost)$/i;
 const connections = [];
 const lookups = [];
-const violations = [];
 
+/**
+ * Record an outbound attempt. Nothing is judged here.
+ *
+ * The verdict is deliberately deferred to the end of the run, because the
+ * target is not reliably known at connect() time — undici fills the address in
+ * afterwards — so an entry is corrected in place once the socket is up and
+ * only then compared against loopback. Judging at record time meant either
+ * trusting a default (which would pass an escape we could not see) or flagging
+ * every connection before the correction arrived.
+ */
 function record(kind, host, port) {
   const entry = { kind, host: String(host), port };
   connections.push(entry);
-  if (!LOOPBACK.test(entry.host)) violations.push(entry);
   return entry;
 }
 
@@ -33,13 +41,15 @@ function record(kind, host, port) {
 const realConnect = net.Socket.prototype.connect;
 net.Socket.prototype.connect = function patched(...args) {
   const opts = typeof args[0] === 'object' && args[0] !== null ? args[0] : { port: args[0], host: args[1] };
-  const entry = record('tcp', opts.host ?? opts.path ?? '127.0.0.1', opts.port);
+  // Defaulting an unknown host to 127.0.0.1 is the wrong default for a check
+  // whose purpose is to catch an escape: an outbound connection whose target
+  // we could not read would have been recorded as loopback and passed.
+  const entry = record('tcp', opts.host ?? opts.path ?? 'unknown', opts.port);
   // The requested options do not always carry the port (undici fills it in
   // later), so the authoritative endpoint is read off the live socket.
   this.once('connect', () => {
     if (this.remoteAddress) entry.host = this.remoteAddress.replace(/^::ffff:/, '');
     if (this.remotePort) entry.port = this.remotePort;
-    if (!LOOPBACK.test(entry.host) && !violations.includes(entry)) violations.push(entry);
   });
   return realConnect.apply(this, args);
 };
@@ -54,13 +64,11 @@ tls.connect = function patched(...args) {
 // A DNS lookup for anything is itself a leak: it tells a resolver you are here.
 const realLookup = dns.lookup;
 dns.lookup = function patched(hostname, ...rest) {
-  lookups.push(hostname);
-  if (!LOOPBACK.test(hostname)) violations.push({ kind: 'dns', host: hostname });
+  lookups.push(String(hostname));
   return realLookup.call(dns, hostname, ...rest);
 };
 dns.promises.lookup = ((real) => function patched(hostname, ...rest) {
-  lookups.push(hostname);
-  if (!LOOPBACK.test(hostname)) violations.push({ kind: 'dns', host: hostname });
+  lookups.push(String(hostname));
   return real.call(dns.promises, hostname, ...rest);
 })(dns.promises.lookup);
 
@@ -90,6 +98,12 @@ for (const [key, n] of tally) console.log(`  ${n.toString().padStart(3)} x  ${ke
 
 console.log(`\nDNS lookups observed: ${lookups.length}`);
 for (const l of new Set(lookups)) console.log(`        ${l}`);
+
+// Judged now that every socket has had its chance to report its real address.
+const violations = [
+  ...connections.filter((c) => !LOOPBACK.test(c.host)),
+  ...[...new Set(lookups)].filter((h) => !LOOPBACK.test(h)).map((h) => ({ kind: 'dns', host: h })),
+];
 
 if (violations.length) {
   console.log(`\nFAIL — ${violations.length} connection(s) left this machine:`);

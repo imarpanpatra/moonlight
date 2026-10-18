@@ -217,7 +217,7 @@ Then paste a contract, or press **Use the sample contract** for the fictional on
 in `data/sample-contract.txt`.
 
 ```bash
-npm run check       # 39 tests: segmentation, retrieval, the gate, the flags
+npm run check       # 56 tests: segmentation, retrieval, the gate, the flags
 npm run airgap      # proves nothing leaves the machine
 node src/eval.js    # the 14-clause labelled eval
 
@@ -258,7 +258,7 @@ which clauses matter. Retrieval does that, in code, before any inference runs.
 | `src/gemma.js` | The only file that opens a socket. The prompt lives here. |
 | `src/review.js` | Orchestration, the verbatim gate, verdict stripping, ordering. |
 | `src/server.js` | Express, bound to 127.0.0.1. |
-| `src/check.js` | 39 tests. |
+| `src/check.js` | 56 tests. |
 | `src/eval.js` | 14 labelled clauses. |
 | `src/airgap.js` | Socket and DNS instrumentation. |
 

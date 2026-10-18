@@ -297,11 +297,15 @@ details pre {
 }
 
 .absent {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+/* Only draw the divider when there is something below it. */
+.absent:not(:empty) {
   margin-top: 26px;
   padding-top: 18px;
   border-top: 1px solid var(--line);
-  font-size: 14px;
-  color: var(--muted);
 }
 
 .absent ul {

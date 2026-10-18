@@ -85,9 +85,28 @@ export const CATEGORIES = [
 const MIN_CLAUSE_CHARS = 40;
 
 // A clause starts at a line beginning with 1., 1.1, 1.1.1, or Article N.
-const NUMBERED = /^\s{0,8}(?:(?:article|clause|section)\s+)?(\d+(?:\.\d+){0,3})[.)]?\s+\S/i;
+const NUMBERED = /^\s{0,8}(?:(article|clause|section)\s+)?(\d+(?:\.\d+){0,3})([.)]?)\s+\S/i;
 // A heading is a short line in capitals, optionally numbered.
 const HEADING = /^\s{0,8}(?:(?:article|clause|section)\s+)?(\d+(?:\.\d+){0,3})?[.)]?\s*([A-Z][A-Z\s\-&/',()]{3,70})\s*$/;
+
+/**
+ * Is this line the start of a clause, and if so what is its number?
+ *
+ * The trap here is that contracts are hard-wrapped, so a clause routinely
+ * continues onto a line beginning with a digit: "...no fewer than\n45 hours per
+ * week". Treating that as a clause boundary chops the clause in half, and if
+ * the tail is shorter than MIN_CLAUSE_CHARS it is dropped from the document
+ * altogether — the tool would then show you a clause with its final obligation
+ * silently missing. So a bare number is not enough. There must be punctuation
+ * ("9."), a dotted number ("9.2"), or an explicit word ("Clause 9").
+ */
+function clauseStart(line) {
+  const m = line.match(NUMBERED);
+  if (!m) return null;
+  const [, prefix, number, punct] = m;
+  if (!punct && !number.includes('.') && !prefix) return null;
+  return number;
+}
 
 /**
  * Split a contract into numbered clauses.
@@ -105,13 +124,17 @@ export function segment(text) {
   const headingAt = new Map();
   let currentHeading = '';
 
+  const numberAt = new Map();
+
   lines.forEach((line, i) => {
     const h = line.match(HEADING);
     if (h && h[2] && h[2].trim().split(/\s+/).length <= 9) {
       currentHeading = h[2].trim().replace(/\s+/g, ' ');
     }
-    if (NUMBERED.test(line)) {
+    const num = clauseStart(line);
+    if (num !== null) {
       starts.push(i);
+      numberAt.set(i, num);
       headingAt.set(i, currentHeading);
     }
   });
@@ -121,8 +144,11 @@ export function segment(text) {
     clauses = starts.map((start, idx) => {
       const end = idx + 1 < starts.length ? starts[idx + 1] : lines.length;
       const body = lines.slice(start, end).join('\n').trim();
-      const num = (lines[start].match(NUMBERED) || [])[1] || String(idx + 1);
-      return { number: num, heading: headingAt.get(start) || '', text: body };
+      return {
+        number: numberAt.get(start) || String(idx + 1),
+        heading: headingAt.get(start) || '',
+        text: body,
+      };
     });
   } else {
     // No numbering to lean on. Fall back to blank-line paragraphs.
@@ -155,12 +181,37 @@ export function normalise(s) {
  * supporting vocabulary on its own ("shall not", "in writing") appears
  * everywhere in a contract and would drag in half the document.
  */
+// Normalised once at load. These are constants, and normalising them again for
+// every clause meant thousands of throwaway string allocations per contract.
+const NORMALISED = new Map(
+  CATEGORIES.map((c) => [
+    c.id,
+    {
+      anchors: c.anchors.map((a) => [a, normalise(a)]),
+      terms: c.terms.map((t) => [t, normalise(t)]),
+    },
+  ]),
+);
+
 export function score(clauseText, category) {
   const hay = normalise(clauseText);
-  const anchors = category.anchors.filter((a) => hay.includes(normalise(a)));
+  const pre = NORMALISED.get(category.id);
+  const anchors = pre.anchors.filter(([, n]) => hay.includes(n)).map(([raw]) => raw);
   if (anchors.length === 0) return null;
-  const terms = category.terms.filter((t) => hay.includes(normalise(t)));
+  const terms = pre.terms.filter(([, n]) => hay.includes(n)).map(([raw]) => raw);
   return { anchors, terms, points: anchors.length * 2 + terms.length };
+}
+
+/** Compare "9.2" against "11.1" the way a contract numbers them, not alphabetically. */
+export function compareClauseNumbers(a, b) {
+  const pa = String(a).split('.').map(Number);
+  const pb = String(b).split('.').map(Number);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i += 1) {
+    const x = Number.isFinite(pa[i]) ? pa[i] : -1;
+    const y = Number.isFinite(pb[i]) ? pb[i] : -1;
+    if (x !== y) return x - y;
+  }
+  return 0;
 }
 
 /**
@@ -174,7 +225,7 @@ export function score(clauseText, category) {
 export function findCandidates(text, { limit = 12 } = {}) {
   const clauses = segment(text);
   const hits = [];
-  for (const clause of clauses) {
+  for (const [order, clause] of clauses.entries()) {
     // The section heading is scored along with the body. "7.1 The Employee
     // shall promptly disclose ... any interest which conflicts" never says the
     // phrase "conflict of interest" — the heading above it does, and dropping
@@ -182,9 +233,24 @@ export function findCandidates(text, { limit = 12 } = {}) {
     const haystack = `${clause.heading}\n${clause.text}`;
     for (const category of CATEGORIES) {
       const s = score(haystack, category);
-      if (s) hits.push({ clause, category, ...s });
+      if (s) hits.push({ clause, category, order, ...s });
     }
   }
-  hits.sort((a, b) => b.points - a.points || a.clause.id.localeCompare(b.clause.id));
-  return { clauses, candidates: hits.slice(0, limit), totalHits: hits.length };
+  // Tie-break on document order. Clause ids are "c1".."c28", so comparing them
+  // as strings put c10 ahead of c7 and shuffled equally-scored clauses.
+  hits.sort((a, b) => b.points - a.points || a.order - b.order);
+
+  // Which categories exist ANYWHERE in the document, computed before the limit
+  // is applied. Reporting absence from the capped list would tell someone
+  // "there is no non-compete in this document" about a contract that has one
+  // and merely ranked it thirteenth. A false "not found" is the one direction
+  // this tool must not fail in.
+  const present = new Set(hits.map((h) => h.category.id));
+
+  return {
+    clauses,
+    candidates: hits.slice(0, Math.max(0, limit)),
+    totalHits: hits.length,
+    present,
+  };
 }

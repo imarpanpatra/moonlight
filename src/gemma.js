@@ -1,8 +1,45 @@
 // The only thing in this project that talks to a model, and the only thing
 // that opens a socket. The socket goes to 127.0.0.1.
 
-export const OLLAMA = process.env.OLLAMA_HOST || 'http://127.0.0.1:11434';
+/**
+ * Ollama's own documented format for this variable is "host:port", with no
+ * scheme — `OLLAMA_HOST=127.0.0.1:11434`. Passing that straight to fetch()
+ * throws "Failed to parse URL", which surfaced in the interface as "the local
+ * model is not running, start it with ollama serve": wrong, and it sends you
+ * off to debug a server that is already running. So the scheme is added if the
+ * variable does not carry one.
+ */
+function resolveHost(raw) {
+  const value = String(raw || '').trim();
+  if (!value) return 'http://127.0.0.1:11434';
+  const withScheme = /^https?:\/\//i.test(value) ? value : `http://${value}`;
+  return withScheme.replace(/\/+$/, '');
+}
+
+export const OLLAMA = resolveHost(process.env.OLLAMA_HOST);
 export const MODEL = process.env.MOONLIGHT_MODEL || 'gemma3:4b';
+
+/**
+ * This project's whole claim is that the contract does not leave the machine,
+ * and OLLAMA_HOST is the one setting that could break it. Pointing it at a
+ * remote Ollama would quietly ship every clause off this laptop, so say so
+ * loudly rather than let the interface keep promising otherwise.
+ */
+export const IS_LOCAL = (() => {
+  try {
+    const { hostname } = new URL(OLLAMA);
+    return /^(127\.\d+\.\d+\.\d+|::1|\[::1\]|localhost)$/i.test(hostname);
+  } catch {
+    return false;
+  }
+})();
+
+if (!IS_LOCAL) {
+  console.warn(
+    `WARNING: OLLAMA_HOST points at ${OLLAMA}, which is not this machine.\n` +
+    'Contract text will be sent there. Unset OLLAMA_HOST to keep it local.',
+  );
+}
 
 /**
  * Ask the local model one question and get JSON back.

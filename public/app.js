@@ -12,12 +12,33 @@ const absentEl = $('absent');
 const esc = (s) =>
   String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
+/**
+ * Read a response as JSON, or explain it.
+ *
+ * Not every reply is JSON: a payload that exceeds the body limit, or a proxy in
+ * the way, returns HTML, and calling res.json() on it threw "Unexpected token
+ * '<'" at the user. They pasted a contract and were shown a parser error.
+ */
+async function readJson(res) {
+  const body = await res.text();
+  try {
+    return JSON.parse(body);
+  } catch {
+    if (res.status === 413) return { error: 'That contract is too large to send in one go.' };
+    return { error: `The server replied with ${res.status} and something that was not JSON.` };
+  }
+}
+
 async function checkHealth() {
   const badge = $('offline');
   const text = $('offline-text');
   try {
-    const h = await (await fetch('/api/health')).json();
-    if (h.up && h.installed) {
+    const h = await readJson(await fetch('/api/health'));
+    if (h.local === false) {
+      // The promise on the rest of this page is not true in this configuration.
+      badge.className = 'offline down';
+      text.textContent = `OLLAMA_HOST points at ${h.host}, which is not this machine. Your contract would be sent there.`;
+    } else if (h.up && h.installed) {
       badge.className = 'offline up';
       text.textContent = `${h.model}, running on this machine. Nothing is uploaded.`;
     } else if (h.up) {
@@ -36,8 +57,11 @@ async function checkHealth() {
 sampleBtn.addEventListener('click', async () => {
   sampleBtn.disabled = true;
   try {
-    const { text } = await (await fetch('/api/sample')).json();
-    contract.value = text;
+    const data = await readJson(await fetch('/api/sample'));
+    if (data.text) contract.value = data.text;
+    else statusEl.textContent = data.error || 'Could not load the sample contract.';
+  } catch (err) {
+    statusEl.textContent = err.message;
   } finally {
     sampleBtn.disabled = false;
   }
@@ -62,7 +86,7 @@ goBtn.addEventListener('click', async () => {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ text }),
     });
-    const data = await res.json();
+    const data = await readJson(res);
     if (!res.ok) {
       results.hidden = false;
       statline.textContent = '';
@@ -87,12 +111,16 @@ function render(data) {
   statline.textContent =
     `${stats.clauses} clauses in document · ${stats.candidates} matched on keywords · ` +
     `${stats.read} quotes verified · ${stats.unverified + stats.unread} readings discarded · ` +
+    (stats.skipped ? `${stats.skipped} further matches not read · ` : '') +
     `0 verdicts given · ${(stats.ms / 1000).toFixed(1)}s · nothing left this laptop`;
 
   findingsEl.innerHTML = findings
     .map((f) => (f.state === 'read' ? card(f) : rejectedCard(f)))
     .join('');
 
+  // Left empty when there is nothing to say, because the styled border-top
+  // would otherwise draw a divider under an empty box.
+  absentEl.innerHTML = '';
   if (absent.length) {
     absentEl.innerHTML =
       '<strong>Not found anywhere in this document:</strong><ul>' +

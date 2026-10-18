@@ -1,11 +1,14 @@
 // Orchestration, and the rule that matters.
 
-import { CATEGORIES, findCandidates, normalise } from './clauses.js';
+import { CATEGORIES, compareClauseNumbers, findCandidates, normalise } from './clauses.js';
 import { detect } from './flags.js';
 import { ask, buildPrompt } from './gemma.js';
 
 /** A quote shorter than this matches too much of any contract to be evidence. */
 const MIN_QUOTE_CHARS = 30;
+
+/** At ~5 seconds a clause, this is already a minute and a half of waiting. */
+const MAX_CANDIDATES = 40;
 
 const VERDICT_WORDS = [
   'you may', 'you may not', 'you can', 'you cannot', 'you are allowed',
@@ -30,6 +33,53 @@ export function verifyQuote(quote, clauseText) {
   if (q.length < MIN_QUOTE_CHARS) return { ok: false, reason: 'too-short' };
   if (q.includes('...') || q.includes('[')) return { ok: false, reason: 'elided' };
   if (!normalise(clauseText).includes(q)) return { ok: false, reason: 'not-in-document' };
+  return { ok: true, span: locate(quote, clauseText) };
+}
+
+/**
+ * Find the model's quote inside the document and return the document's own text.
+ *
+ * Verification is done on normalised text — lowercased, whitespace collapsed,
+ * curly quotes flattened — which is right for checking but wrong for display.
+ * A model that returns the clause IN BLOCK CAPITALS, or with straight quotes
+ * where the contract has curly ones, passes the check, and then the interface
+ * presents its version as a verbatim quotation of the contract. So once a quote
+ * is verified, the span is located in the original and the original is what gets
+ * shown. What you read on screen is then literally the characters in your file.
+ */
+function locate(quote, clauseText) {
+  const words = normalise(quote).split(' ').filter(Boolean);
+  if (words.length === 0) return null;
+  // Quote and dash characters differ between the model's copy and the file, so
+  // match them as loosely as normalise() flattens them. Words are joined with
+  // \s+ because the file is hard-wrapped where the normalised quote has spaces.
+  const loose = words
+    .map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    .map((w) => w
+      .replace(/'/g, "['‘’‚‛]")
+      .replace(/"/g, '["“”„‟]')
+      .replace(/-/g, '[-‐-―−]'))
+    .join('\\s+');
+  try {
+    const m = clauseText.match(new RegExp(loose, 'i'));
+    return m ? m[0].replace(/\s+/g, ' ').trim() : null;
+  } catch {
+    return null; // A quote that will not compile is simply not located.
+  }
+}
+
+/**
+ * Is the model's reply the object we asked for?
+ *
+ * It is asked for a JSON object with five keys. It can return `null`, a bare
+ * string, a number or an array instead, and `raw.quote` on `null` throws a
+ * TypeError that escapes readOne, unwinds review(), and loses every clause in
+ * the document to one malformed reply. One bad clause should cost one clause.
+ */
+export function describeResponse(raw) {
+  if (raw === null) return { ok: false, reason: 'model returned null, not an object' };
+  if (Array.isArray(raw)) return { ok: false, reason: 'model returned an array, not an object' };
+  if (typeof raw !== 'object') return { ok: false, reason: `model returned a ${typeof raw}, not an object` };
   return { ok: true };
 }
 
@@ -91,6 +141,9 @@ async function readOne({ clause, category, anchors }) {
     return { ...base, state: 'unread', reason: `model error: ${err.message}` };
   }
 
+  const usable = describeResponse(raw);
+  if (!usable.ok) return { ...base, state: 'unread', reason: usable.reason };
+
   const check = verifyQuote(raw.quote, clause.text);
   if (!check.ok) {
     // The model said something about this clause. We could not confirm it
@@ -105,8 +158,9 @@ async function readOne({ clause, category, anchors }) {
 
   const effect = stripVerdicts(raw.effect);
 
-  // Kept, but demoted. The eval put this at 7/14, with "yes" for 13 of 14
-  // clauses, so it is recorded for ordering and never shown as a conclusion.
+  // Recorded for the eval and for anyone inspecting the JSON, and deliberately
+  // used by nothing: not the ordering, not the interface. The eval put it at
+  // 7/14, answering "yes" to 13 of 14 clauses.
   const modelGuess = ['yes', 'unclear', 'no'].includes(raw.governs_side_income)
     ? raw.governs_side_income
     : 'unclear';
@@ -115,7 +169,10 @@ async function readOne({ clause, category, anchors }) {
     ...base,
     state: 'read',
     modelGuess,
-    quote: String(raw.quote).trim(),
+    // The document's own characters where they could be located, the model's
+    // string only as a fallback. See locate().
+    quote: check.span || String(raw.quote).trim(),
+    quoteFromDocument: Boolean(check.span),
     effect: effect.text,
     effectStripped: effect.removed,
     // From the clause text, not from the model's requires_consent field.
@@ -134,7 +191,11 @@ async function readOne({ clause, category, anchors }) {
  */
 export async function review(text, { limit = 12, onProgress } = {}) {
   const started = Date.now();
-  const { clauses, candidates, totalHits } = findCandidates(text, { limit });
+  // Clamped. The limit reaches this from an HTTP body, and a negative one made
+  // slice(0, -5) quietly discard the last five candidates, while a huge one
+  // would queue thousands of model calls at five seconds each.
+  const capped = Math.min(Math.max(Math.trunc(Number(limit) || 12), 1), MAX_CANDIDATES);
+  const { clauses, candidates, totalHits, present } = findCandidates(text, { limit: capped });
 
   const findings = [];
   for (let i = 0; i < candidates.length; i += 1) {
@@ -143,11 +204,12 @@ export async function review(text, { limit = 12, onProgress } = {}) {
   }
 
   // Order by what the clause does, not by what the model thought of it.
-  findings.sort((a, b) => weigh(b) - weigh(a) || a.number.localeCompare(b.number));
+  findings.sort((a, b) => weigh(b) - weigh(a) || compareClauseNumbers(a.number, b.number));
 
-  const seen = new Set(findings.map((f) => f.category));
+  // Absent means absent from the whole document, not merely from the clauses
+  // that fitted under the limit. `present` is computed before the cap.
   const absent = CATEGORIES
-    .filter((c) => !seen.has(c.id))
+    .filter((c) => !present.has(c.id))
     .map((c) => ({ category: c.id, categoryLabel: c.label }));
 
   return {
@@ -159,6 +221,9 @@ export async function review(text, { limit = 12, onProgress } = {}) {
       unverified: findings.filter((f) => f.state === 'unverified').length,
       unread: findings.filter((f) => f.state === 'unread').length,
       flagged: findings.filter((f) => f.flags.length > 0).length,
+      // Matches that were found but not read, because the limit cut them off.
+      // Shown, rather than quietly dropped.
+      skipped: Math.max(0, totalHits - candidates.length),
       verdicts: 0, // By construction. See stripVerdicts.
       ms: Date.now() - started,
     },
